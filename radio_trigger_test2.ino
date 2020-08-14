@@ -1,4 +1,4 @@
-/* radio_trigger_test2
+/* radio_trigger_test2 for ATmega328
  * Michael Kylman
  * 8/13/2020
  * thanks to _MG_ and the DemonSeedEDU
