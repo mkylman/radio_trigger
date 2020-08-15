@@ -1,4 +1,5 @@
 /* radio_trigger_test1
+ * 8/7/2020
  * first attempt at figuring this out, not great but it worked
  * see radio_trigger_test2
  */
