@@ -1,11 +1,12 @@
 /* rfdetect3 for UNO
- * Michael Kylman
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
- * changes: range increase to just under 10ft
+ * changes: range increase to just under 10ft using byte and SQUASH on aRead pass to minMax
+ *          range increase to just over 11ft using int16_t and no SQUASH
  */
 // SQUASH can be between 0 - 7
-#define SQUASH 3
+//#define SQUASH 3
+
 // this will change depending on MCU
 #define PIN    A0
 #define LEDPIN 13
@@ -24,7 +25,7 @@ void setup() {
   // get our baseline readings
   for (byte i = 0; i < 30; i++) {
     aRead = analogRead(PIN);
-    minMax((aRead >> SQUASH), &baseMin, &baseMax);
+    minMax((aRead), &baseMin, &baseMax);
   }
 }
 
@@ -34,7 +35,7 @@ void loop() {
   
   for (byte i = 0; i < 20; i++) {
     aRead = analogRead(PIN);
-    minMax((aRead >> SQUASH), &newMin, &newMax);
+    minMax((aRead), &newMin, &newMax);
   }
 
   if (newMin > baseMin && newMax < baseMax)
