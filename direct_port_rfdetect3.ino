@@ -2,7 +2,7 @@
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
  * changes: range increase to just under 10ft using byte and SQUASH on TENBIT
- *          range increase to just over 11ft using int16_t
+ *          range increase to 12ft using int16_t
  */
 #include <avr/io.h>
 #include <util/delay.h>
