@@ -1,11 +1,21 @@
 /* direct_port_rfdetect3 for ATmega328
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
- * changes: range increase to 10ft using byte and SQUASH in TENBIT
- *          range increase to 11ft using int16_t
+ * changes: range increase to just under 10ft using byte and SQUASH in TENBIT
+ *          range increase to just over 11ft using int16_t
  */
 #include <avr/io.h>
 #include <util/delay.h>
+
+//SQUASH can be 0-7
+//#define SQUASH 3
+
+// REFS1 - 0, REFS0 - 1 = VCC as reference
+// MUX3:0 - 0 = use ADC0
+#define CONFIGADC ADMUX |= 0b01000000
+
+// enable ADC, set prescalers to max
+#define ENABLEADC ADCSRA |= 0b10000111
 
 // 0b01000000 - enable ADSC to start a conversion
 #define CONVERT ADCSRA |= (1 << ADSC)
@@ -15,13 +25,6 @@
 
 // combine ADCL and ADCH for full resolution
 #define TENBIT (ADCL | ADCH<<8)
-
-// REFS1 - 0, REFS0 - 1 = VCC as reference
-// MUX3:0 - 0 = use ADC0
-#define CONFIGADC ADMUX |= 0b01000000
-
-// enable ADC, set prescalers to max
-#define ENABLEADC ADCSRA |= 0b10000111
 
 // set led pin to output
 #define LEDSET DDRB |= (1 << PORTB5)
