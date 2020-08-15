@@ -1,4 +1,4 @@
-/* low_level_rfdetect3 for ATmega328
+/* direct_port_rfdetect3 for ATmega328
  * Michael Kylman
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
