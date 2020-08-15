@@ -18,7 +18,7 @@
 #define ENABLEADC ADCSRA |= 0b10000111
 
 // 0b01000000 - enable ADSC to start a conversion
-#define CONVERT ADCSRA |= (1 << ADSC)
+#define ADCONVERT ADCSRA |= (1 << ADSC)
 
 // wait until ADSC is reset at conversion end
 #define CONVERTING ADCSRA & (1 << ADSC)
@@ -35,7 +35,7 @@
 
 int16_t aRead() {
   _delay_ms(1);
-  CONVERT;
+  ADCONVERT;
   while (CONVERTING);
   
   return (TENBIT);
