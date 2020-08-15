@@ -1,17 +1,17 @@
 /* direct_port_rfdetect3 for ATmega328
- * Michael Kylman
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
- * changes: range increase to just under 10ft
+ * changes: range increase to 10ft using byte and SQUASH in TENBIT
+ *          range increase to 11ft using int16_t
  */
 #include <avr/io.h>
 #include <util/delay.h>
 
 // 0b01000000 - enable ADSC to start a conversion
-#define READADC ADCSRA |= (1 << ADSC)
+#define CONVERT ADCSRA |= (1 << ADSC)
 
-// wait until ADSC is reset and read is done
-#define WAITADC while (ADCSRA & (1 << ADSC))
+// wait until ADSC is reset at conversion end
+#define CONVERTING ADCSRA & (1 << ADSC)
 
 // combine ADCL and ADCH for full resolution
 #define TENBIT (ADCL | ADCH<<8)
@@ -23,6 +23,8 @@
 // enable ADC, set prescalers to max
 #define ENABLEADC ADCSRA |= 0b10000111
 
+// set led pin to output
+#define LEDSET DDRB |= (1 << PORTB5)
 // 0b00100000 - LED ON
 #define LEDON  PORTB |= (1 << PORTB5)
 // 0b00000000 - LED OFF
@@ -30,8 +32,9 @@
 
 int16_t aRead() {
   _delay_ms(1);
-  READADC;
-  WAITADC;
+  CONVERT;
+  while (CONVERTING);
+  
   return (TENBIT);
 }
 
@@ -41,7 +44,8 @@ void minMax(int16_t val, int16_t *oMin, int16_t *oMax){
 }
 
 int main(void) {
-  DDRB  |= (1 << PORTB5);// set led pin to output
+  LEDSET;
+
   CONFIGADC;
   ENABLEADC;
 
@@ -58,8 +62,9 @@ int main(void) {
     for (byte i = 0; i < 20; i++)
       minMax(aRead(), &newMin, &newMax);
 
-    if (newMin > baseMin && newMax < baseMax)
+    if (newMin > baseMin && newMax < baseMax) 
       LEDON;
-    else LEDOFF;
+    else
+      LEDOFF;
   }
 }
