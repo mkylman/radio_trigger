@@ -5,7 +5,6 @@
  *          range increase to 12ft using int16_t
  */
 #include <avr/io.h>
-#include <util/delay.h>
 
 //SQUASH can be 0-7
 //#define SQUASH 3
@@ -34,7 +33,6 @@
 #define LEDOFF PORTB &= (0 << PORTB5)
 
 int16_t aRead() {
-  _delay_ms(1);
   ADCONVERT;
   while (CONVERTING);
   
