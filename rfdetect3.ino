@@ -2,7 +2,7 @@
  * 8/14/2020
  * thanks to _MG_ and the DemonSeedEDU
  * changes: range increase to just under 10ft using byte and SQUASH on aRead pass to minMax
- *          range increase to just over 11ft using int16_t and no SQUASH
+ *          range increase to 12ft using int16_t and no SQUASH
  */
 // SQUASH can be between 0 - 7
 //#define SQUASH 3
