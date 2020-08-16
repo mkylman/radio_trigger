@@ -4,7 +4,6 @@
  * changes: range increase to just under 15ft
  *          using TIMER0 to measure unique presses
  */
- 
  #include <avr/io.h>
 
 // TIMER0 STUFF
@@ -14,7 +13,6 @@
 #define CLEARMODE TCCR0A = 0
 // overflow every ms
 #define PRESCALE64 TCCR0B |= (1<<CS00) | (1<<CS01)
-// enable overflow interrupt
 #define ENABLEOVER TIMSK0 |= (1<<TOIE0)
 
 int16_t timerOverflow = 0;
@@ -22,7 +20,7 @@ uint32_t ms = 0;
 uint32_t offTime = 0;
 uint32_t onTime = 0;
 
-ISR(TIMER0_OVF_vect) { // counting milliseconds
+ISR(TIMER0_OVF_vect) {
   timerOverflow++;
   ms++;
   if (timerOverflow >= PERIOD)
@@ -50,7 +48,7 @@ ISR(TIMER0_OVF_vect) { // counting milliseconds
 
 // set led pin to output
 #define LEDSET DDRB |= (1 << PORTB5)
-// 0b00100000 - LED ON
+// 0b00x00000 - LED ON/OFF
 #define LEDON  PORTB |= (1 << PORTB5)
 // 0b00000000 - LED OFF
 #define LEDOFF PORTB &= (0 << PORTB5)
@@ -84,8 +82,6 @@ int main(void) {
   int16_t baseMax = 0;
   int16_t baseMin = 1023;
   bool detecting = false;
-  int32_t prevStart = 0;
-  int32_t startTime = 0;
   byte count = 0;
   
   for (byte i = 0; i < 30; i++)
@@ -102,25 +98,21 @@ int main(void) {
       onTime = ms;
 
       if (!detecting) {
-        startTime = onTime;
         detecting = true;
+        count++;
       }
 
-      if (onTime == startTime && startTime - prevStart > 100/**/)
-        count++;
-
-      prevStart = startTime;
-      
     } else {
       offTime = ms;
-      detecting = false;
-      if (offTime - onTime > 500)
-        count = 0;
+      if (offTime - onTime > 200) {
+        detecting = false;
+        LEDOFF;
+        if (offTime - onTime > 2000)
+          count = 0;
+      }
     }
     
-    if (count >= 3)
+    if (count == 3)
       LEDON;
-    else
-      LEDOFF;
   }
 }
