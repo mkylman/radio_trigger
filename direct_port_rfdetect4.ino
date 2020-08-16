@@ -112,7 +112,9 @@ int main(void) {
       }
     }
     
-    if (count == 3)
+    if (count == 3) {
       LEDON;
+      count = 0;
+    }
   }
 }
