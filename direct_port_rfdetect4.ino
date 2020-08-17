@@ -1,24 +1,29 @@
 /* direct_port_rfdetect4 for ATmega328
- * 8/15/2020
+ * 8/16/2020
  * thanks to _MG_ and the DemonSeedEDU
- * changes: range increase to just under 15ft
+ * changes: range increase to:
+ *              16ft held horizontal to
+ *              13ft pointed at
+ *              10ft held vertical to
  *          using TIMER0 to measure unique presses
+ *          lowered ADC prescaler to 64 for faster samples
  */
- #include <avr/io.h>
+//#include <avr/io.h>
+#include <avr/interrupt.h>
+//#include <avr/pgmspace.h>
 
 // TIMER0 STUFF
 // configure to count milliseconds
-#define PERIOD 1000
-#define CLEARTIMER TCNT0 = 0b00000000
-#define CLEARMODE TCCR0A = 0
-// overflow every ms
-#define PRESCALE64 TCCR0B |= (1<<CS00) | (1<<CS01)
-#define ENABLEOVER TIMSK0 |= (1<<TOIE0)
+#define TIMERSET \
+TCNT0   = 0; \
+TCCR0A  = 0; \
+TCCR0B |= (1<<CS00) | (1<<CS01); \
+TIMSK0 |= (1<<TOIE0)
 
-int16_t timerOverflow = 0;
+#define PERIOD 1000
+
+uint16_t timerOverflow = 0;
 uint32_t ms = 0;
-uint32_t offTime = 0;
-uint32_t onTime = 0;
 
 ISR(TIMER0_OVF_vect) {
   timerOverflow++;
@@ -30,12 +35,8 @@ ISR(TIMER0_OVF_vect) {
 
 // ADC stuff
 
-// REFS1 - 0, REFS0 - 1 = VCC as reference
-// MUX3:0 - 0 = use ADC0
-#define CONFIGADC ADMUX |= 0b01000000
-
-// enable ADC, set prescalers to max
-#define ENABLEADC ADCSRA |= 0b10000111
+#define ADCSET ADMUX |= 0b01000000; \
+ADCSRA |= 0b10000110
 
 // 0b01000000 - enable ADSC to start a conversion
 #define CONVERT ADCSRA |= (1 << ADSC)
@@ -52,8 +53,15 @@ ISR(TIMER0_OVF_vect) {
 #define LEDON  PORTB |= (1 << PORTB5)
 // 0b00000000 - LED OFF
 #define LEDOFF PORTB &= (0 << PORTB5)
-
-int16_t aRead() {
+/* use with lower prescaler below 64. However, affects range
+uint32_t avg = 0;
+uint16_t iir(uint16_t input, uint8_t strength) {
+  avg = ((avg * strength) + input) / (strength + 1);
+  input = avg; 
+  return input;
+}
+*/
+uint16_t aRead() {
   CONVERT;
   while (CONVERTING);
   return (TENBIT);
@@ -66,55 +74,51 @@ void minMax(int16_t val, int16_t *oMin, int16_t *oMax){
 
 void initialize() {
   LEDSET;
-  CONFIGADC;
-  ENABLEADC;
-
-  CLEARTIMER;
-  CLEARMODE;
-  PRESCALE64;
-  ENABLEOVER;
+  ADCSET;
+  TIMERSET;
   sei();
 }
 
 int main(void) {
+  uint32_t offTime = 0;
+  uint32_t onTime = 0;
+  uint16_t baseMax = 0;
+  uint16_t baseMin = 1023;
+  uint8_t detecting = 0;
+  uint8_t count = 0;
+  
   initialize();
 
-  int16_t baseMax = 0;
-  int16_t baseMin = 1023;
-  bool detecting = false;
-  byte count = 0;
-  
-  for (byte i = 0; i < 30; i++)
+  for (uint8_t i = 0; i < 30; i++)
     minMax(aRead(), &baseMin, &baseMax);
 
   while (1) {
-    int16_t newMax = baseMin;
-    int16_t newMin = baseMax;
+    uint16_t newMax = baseMin;
+    uint16_t newMin = baseMax;
     
-    for (byte i = 0; i < 20; i++)
+    for (uint8_t i = 0; i < 20; i++)
       minMax(aRead(), &newMin, &newMax);
     
     if (newMin > baseMin && newMax < baseMax) {
       onTime = ms;
 
       if (!detecting) {
-        detecting = true;
+        detecting = 1;
         count++;
+        if (count == 3) {
+          LEDON;
+          count = 0;
+        }
       }
 
     } else {
       offTime = ms;
       if (offTime - onTime > 200) {
-        detecting = false;
+        detecting = 0;
         LEDOFF;
         if (offTime - onTime > 2000)
           count = 0;
       }
     }
-    
-    if (count == 3) {
-      LEDON;
-      count = 0;
-    }
   }
-}
+}}
