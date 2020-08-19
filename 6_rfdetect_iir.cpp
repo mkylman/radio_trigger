@@ -43,9 +43,6 @@ DIDR0 = 0
 // 0b01000000 - enable ADSC to start a conversion
 #define CONVERT ADCSRA |= (1 << ADSC)
 
-// wait until ADSC is reset at conversion end
-#define CONVERTING ADCSRA & (1 << ADSC)
-
 // combine ADCL and ADCH for full resolution
 #define TENBIT (ADCL | ADCH<<8)
 
