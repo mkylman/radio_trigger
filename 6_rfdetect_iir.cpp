@@ -56,10 +56,6 @@ uint32_t volatile iirSSum   = 0;
 uint32_t volatile iirWeak   = 0;
 uint16_t volatile wPeak     = 0;
 uint32_t volatile iirWSum   = 0;
-uint8_t STRG = 7;
-uint8_t PEAK = 1;
-uint8_t WEAK = 3;
-uint8_t THRS = 15;
 
 void iir(int32_t *avg, int32_t *sum, uint16_t input, uint8_t strength) {
   *sum = *sum - *avg + input;
@@ -68,13 +64,19 @@ void iir(int32_t *avg, int32_t *sum, uint16_t input, uint8_t strength) {
 
 void threshPeaks() {
 
+  uint8_t PEAK = 1;
+  uint8_t WEAK = 3;
+  uint8_t STRG = 7;
+  uint8_t THRS = 15;
+
   uint16_t val = TENBIT;
   
   iir(&peak, &peakSum, val > peak ? val : (peak - 1), PEAK);
+  
   iir(&iirStrong, &iirSSum, val, STRG);
   strPeak = (iirStrong > strPeak) ? iirStrong : (strPeak-1);
-  iir(&iirWeak, &iirWSum, val, WEAK);
   
+  iir(&iirWeak, &iirWSum, val, WEAK);
   wPeak = (iirWeak > wPeak) ? iirWeak : (wPeak-1);
   
   val = (peak > strPeak+2) ? ((peak - strPeak) >> 1) + strPeak : thresh;
