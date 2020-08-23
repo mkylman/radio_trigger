@@ -23,7 +23,7 @@ TIMSK0 |= (1<<TOIE0)
 
 uint32_t volatile ms = 0;
 
-ISR(TIMER0_OVF_vect) {
+ISR(TIMER0_OVF_vect, ISR_NOBLOCK) {
   ms++;
 }
 
@@ -56,8 +56,9 @@ uint32_t volatile iirSSum   = 0;
 uint32_t volatile iirWeak   = 0;
 uint16_t volatile wPeak     = 0;
 uint32_t volatile iirWSum   = 0;
+uint16_t volatile val       = 0;
 
-void iir(int32_t *avg, int32_t *sum, uint16_t input, uint8_t strength) {
+void iir(uint32_t volatile  *avg, uint32_t volatile *sum, uint16_t input, uint8_t strength) {
   *sum = *sum - *avg + input;
   *avg = (*sum + (1<<(strength - 1))>>strength);
 }
@@ -68,8 +69,6 @@ void threshPeaks() {
   uint8_t WEAK = 3;
   uint8_t STRG = 7;
   uint8_t THRS = 15;
-
-  uint16_t val = TENBIT;
   
   iir(&peak, &peakSum, val > peak ? val : (peak - 1), PEAK);
   
@@ -83,8 +82,8 @@ void threshPeaks() {
   iir(&thresh, &threshSum, val, THRS);
 }
 
-ISR(ADC_vect) {
-  threshPeaks();
+ISR(ADC_vect, ISR_NOBLOCK) {
+  val = TENBIT;
 }
 
 // set led pin to output
@@ -103,11 +102,10 @@ void initialize() {
 }
 
 int main(void) {
-  uint32_t onOff = 300;
   uint32_t offTime = 0;
   uint32_t onTime = 0;
   uint32_t offFor = 0;
-  uint16_t onFor = 0;
+  //uint16_t onFor = 0;
 
   uint8_t detect = 0;
   uint8_t count = 0;
@@ -115,13 +113,13 @@ int main(void) {
   initialize();
 
   while (1) {
+    threshPeaks();
     if (wPeak < thresh || peak < thresh) {
       onTime = ms;
-      onFor = onTime - offTime;
+      //onFor = onTime - offTime;
 
       if (!detect /* && onFor > 50*/) {
         detect = 1;
-        onOff = 1100;
         count++;
         if (count == 3) {
           LEDON;
@@ -136,7 +134,6 @@ int main(void) {
         if (detect) {
           detect = 0;
           LEDOFF;
-          onOff = 300;
         }
         if (offFor > 2000) // 2 seconds of nothing, reset
           count = 0;
