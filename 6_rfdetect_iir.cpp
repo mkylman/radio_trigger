@@ -46,6 +46,7 @@ DIDR0 = 0
 // combine ADCL and ADCH for full resolution
 #define TENBIT (ADCL | ADCH<<8)
 
+uint16_t volatile val       = 0;
 uint32_t volatile peak      = 0;
 uint32_t volatile peakSum   = 0;
 uint32_t volatile thresh    = 0;
@@ -53,10 +54,11 @@ uint32_t volatile threshSum = 0;
 uint32_t volatile iirStrong = 0;
 uint16_t volatile strPeak   = 0;
 uint32_t volatile iirSSum   = 0;
+/*
 uint32_t volatile iirWeak   = 0;
 uint16_t volatile wPeak     = 0;
 uint32_t volatile iirWSum   = 0;
-uint16_t volatile val       = 0;
+*/
 
 void iir(uint32_t volatile  *avg, uint32_t volatile *sum, uint16_t input, uint8_t strength) {
   *sum = *sum - *avg + input;
@@ -75,8 +77,10 @@ void threshPeaks() {
   iir(&iirStrong, &iirSSum, val, STRG);
   strPeak = (iirStrong > strPeak) ? iirStrong : (strPeak-1);
   
+  /*
   iir(&iirWeak, &iirWSum, val, WEAK);
   wPeak = (iirWeak > wPeak) ? iirWeak : (wPeak-1);
+  */
   
   val = (peak > strPeak+2) ? ((peak - strPeak) >> 1) + strPeak : thresh;
   iir(&thresh, &threshSum, val, THRS);
@@ -114,7 +118,7 @@ int main(void) {
 
   while (1) {
     threshPeaks();
-    if (wPeak < thresh || peak < thresh) {
+    if (peak < thresh /*|| wPeak < thresh*/ ) {
       onTime = ms;
       //onFor = onTime - offTime;
 
